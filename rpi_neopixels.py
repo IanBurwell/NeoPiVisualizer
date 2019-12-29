@@ -295,6 +295,15 @@ def sound_original(melspectrum):
             pixels[len(pixels)//2-i] = value
     pixels.show()
 
+def sound_rgb(melspectrum):
+    for i in range(len(pixels)//2):
+        r, g, b = colorsys.hls_to_rgb(max(0, 1-melspectrum[i]/2),min(0.5, melspectrum[i]),1)
+
+        pixels[len(pixels)//2+i] = (int(r*255), int(g*255), int(b*255))
+        pixels[len(pixels)//2-i] = (int(r*255), int(g*255), int(b*255))
+    pixels.show()
+
+
 
 ################################################################
 # Display Select           
@@ -319,6 +328,6 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #meteor((255,200,200), 8, 20, 1)
     #random_fade(2, (255,200,0))
 
-    pixels.start_fade()
-    pixels.run_visualizer(sound_original)
-
+    #pixels.enable_fade()
+    #pixels.run_visualizer_socket(sound_original)
+    pixels.run_visualizer_socket(sound_rgb)

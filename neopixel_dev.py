@@ -7,9 +7,11 @@ import _thread
 
 '''
 TODO:
-fade keeping color ratio
+fade/brightness keeping color ratio
 adjust color setting to be more accurate
 adjust brightness to be more linear
+cast inputs to int
+make pc stream the socket server
 '''
 
 class NeoPixels():
@@ -23,7 +25,7 @@ class NeoPixels():
         self._fade_thread = None
         
         if fade:
-            self.start_fade()
+            self.enable_fade()
             
         if self.DEVEL:
             self.pixels = [(0,0,0)] * self.size
@@ -77,7 +79,7 @@ class NeoPixels():
         self.brightness = amount
 
     #starts a thread constantly fading all pixels
-    def start_fade(self, fadeDelay=0.01, fadeAmount=10):
+    def enable_fade(self, fadeDelay=0.01, fadeAmount=10):
         self.fadeDelay = fadeDelay
         self.fadeAmount = fadeAmount
         if self._fade_thread is None:
@@ -95,7 +97,7 @@ class NeoPixels():
 
     #listens with a socket and gives sound data to the sound_handler
     #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
-    def run_visualizer(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
+    def run_visualizer_socket(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
         if dataLength is None:
             dataLength = self.size
         #create socket server
@@ -149,7 +151,7 @@ class NeoPixels():
         import pygame
         import pygame.gfxdraw
 
-        FPS = 60
+        FPS = 90
 
         pygame.init()
         screen = pygame.display.set_mode((900, 50), pygame.RESIZABLE)
