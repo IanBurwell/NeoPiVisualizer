@@ -149,14 +149,14 @@ class NeoPixels():
         import pygame
         import pygame.gfxdraw
 
+        FPS = 60
+
         pygame.init()
         screen = pygame.display.set_mode((900, 50), pygame.RESIZABLE)
         pygame.display.set_caption("Simulated Neopixels")
         clock = pygame.time.Clock()
         
         while self._display_thread is not None:
-            clock.tick(50)
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -172,8 +172,24 @@ class NeoPixels():
                     pygame.gfxdraw.box(screen,
                                        (w/self.size*i, 0, w/self.size,h),
                                        tuple( map(lambda x: int(x*self.brightness), self.pixels[i]) ))
-            self.updatePygame = False
-            
-            pygame.display.flip()
+                self.updatePygame = False
 
+            pygame.display.update() #aka flip
+            clock.tick(FPS)
+
+
+if __name__ == "__main__":
+    pixels = NeoPixels(True)
+
+    def rainbow_pan(speed, numWaves=4):
+        offset = 0
+        
+        while True:
+            time.sleep(0.001)
+            offset = (offset+speed/10)%len(pixels)
+            for i in range(len(pixels)):
+                r, g, b = colorsys.hls_to_rgb((i+offset)*numWaves%len(pixels)/len(pixels), 0.5,1)
+                pixels[i] = (int(r*255), int(g*255), int(b*255))
+            pixels.show()
+    rainbow_pan(1)
         
