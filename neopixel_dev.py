@@ -20,10 +20,11 @@ class NeoPixels():
         self.updatePygame = True
         self.lock = _thread.allocate_lock()
         self.brightness = brightness
+        self._fade_thread = None
         
         if fade:
             self.start_fade()
-        
+            
         if self.DEVEL:
             self.pixels = [(0,0,0)] * self.size
             self._display_thread = _thread.start_new_thread(self._display,())
@@ -35,11 +36,11 @@ class NeoPixels():
     def __enter__(self):
         return self
         
-    def __exit__(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         if not self.DEVEL:
             self.pixels.deinit()
         else:
-            self._display_thread.exit()
+            self._display_thread = None
         self.stop_fade()
 
     def __getitem__(self, index):
@@ -70,31 +71,31 @@ class NeoPixels():
             else:
                 self.pixels.fill(color)
 
-    def set_brightness(self, ammount=1.0):
+    def set_brightness(self, amount=1.0):
         if not self.DEVEL:
-            self.pixels.brightness(ammount)            
-        self.brightness = ammount
+            self.pixels.brightness(amount)            
+        self.brightness = amount
 
     #starts a thread constantly fading all pixels
-    def start_fade(self, fadeDelay=0.05, fadeAmmount=20):
+    def start_fade(self, fadeDelay=0.01, fadeAmount=10):
         self.fadeDelay = fadeDelay
-        self.fadeAmmount = fadeAmmount
+        self.fadeAmount = fadeAmount
         if self._fade_thread is None:
-            self._fade_thread = _thread.start_new_thread(self._fade(), ())
+            self._fade_thread = _thread.start_new_thread(self._fade, ())
 
     #stops the fade thread
     def stop_fade(self):
         if self._fade_thread is not None:
-            self._fade_thread.exit()
             self._fade_thread = None
 
     #sets the delay of the fade        
-    def fade_setup(self, delay=0.05, fadeAmmount=20):
+    def fade_setup(self, delay=0.05, fadeAmount=20):
         self.fadeDelay = delay
-        self.fadeAmmount = fadeAmmount
+        self.fadeAmount = fadeAmount
 
     #listens with a socket and gives sound data to the sound_handler
-    def run_visualiser(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
+    #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
+    def run_visualizer(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
         if dataLength is None:
             dataLength = self.size
         #create socket server
@@ -117,36 +118,43 @@ class NeoPixels():
                         if math.isinf(fdata) and (len(melspectrum) >= dataLength or not skipMalformed):#data is all received
                             sound_handler(melspectrum)
                             melspectrum.clear()
-                        elif math.isinf(fdata):#malformed
+                        elif math.isinf(fdata): #malformed
                             melspectrum.clear()
                         else:
                             melspectrum.append(fdata)
                     else:
                         print("no more data from", client_address)
                         break
-            except:
+            except KeyboardInterrupt:
+                print("Closing")
+                c.close()
+                s.close()
+                return
+            finally:
                 print("Lost connection to", addr)
                 melspectrum.clear()
-            finally:
                 c.close()
 
     def _fade(self):
-        time.sleep(self.fadeDelay)
-        with self.lock:
-            for i in self.pixels:
-                self.pixels[i] = (max(0,self.pixels[i][0]-self.fadeAmmount),max(0,self.pixels[i][1]-self.fadeAmmount),max(0,self.pixels[i][2]-self.fadeAmmount))                
-
+        while self._fade_thread is not None:
+            time.sleep(self.fadeDelay)
+            with self.lock:
+                for i in range(self.size):
+                    self.pixels[i] = (max(0,self.pixels[i][0]-self.fadeAmount),
+                                      max(0,self.pixels[i][1]-self.fadeAmount),
+                                      max(0,self.pixels[i][2]-self.fadeAmount))                
+            self.show()
 
     def _display(self):
         import pygame
         import pygame.gfxdraw
 
         pygame.init()
-        screen = pygame.display.set_mode((900, 50),pygame.RESIZABLE)
+        screen = pygame.display.set_mode((900, 50), pygame.RESIZABLE)
         pygame.display.set_caption("Simulated Neopixels")
         clock = pygame.time.Clock()
         
-        while True:
+        while self._display_thread is not None:
             clock.tick(50)
 
             for event in pygame.event.get():

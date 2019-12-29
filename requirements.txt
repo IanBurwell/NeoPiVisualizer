@@ -1,0 +1,5 @@
+pygame
+librosa
+pyaudio
+rpi_ws281x 
+adafruit-circuitpython-neopixel

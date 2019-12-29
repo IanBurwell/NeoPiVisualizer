@@ -7,13 +7,12 @@ import neopixel_dev
 
 '''
 TODO:
-rainbow size
-gradient fix, meteor random
+more meteor (bouce, random size/speeds)
+modify melspectrum to only pass half the data (other not needed)
+Vizualisers: rolling peak volume
 '''
 
 DEVELOPER_MODE = True
-
-pixels = neopixel_dev.NeoPixels(DEVELOPER_MODE) #Start NeoPixels with in simulation mode
     
 ################################################################
 # Patterns           
@@ -45,7 +44,6 @@ def pulse(speed, color):
 
 def pulse_sin(speed, color):
     brightness = 0
-    speed = speed
     r, g, b = color
     
     while True:
@@ -55,17 +53,20 @@ def pulse_sin(speed, color):
         pixels.fill((int(r*brightness), int(g*brightness), int(b*brightness)))
         pixels.show()
             
-def gradient(delay, color):
-    for i in range(1, len(pixels)):
-        r, g, b = color
-        pixels[i] = (int(r*i/len(pixels)),int(g*i/len(pixels)),int(b*i/len(pixels)))
+def gradient(delay, color, number=2):
+    offset = 0
+    r, g, b = color
 
     while True:
         time.sleep(delay)
-        pixels.insert(0,pixels.pop())
+        offset = (offset-1)%len(pixels)
+        pixels.fill((0,0,0))
+        for i in range(len(pixels)):
+            lightness = (i+offset)*number%len(pixels)/len(pixels)
+            pixels[i] = (int(r*lightness), int(g*lightness), int(b*lightness))
         pixels.show()
         
-def dot_bounce(speeds, colors, radius=len(pixels)//20):        
+def dot_bounce(speeds, colors, radius=15):        
     number = len(speeds) #of dots
     positions = [0]*number
 
@@ -96,7 +97,7 @@ def dot_bounce(speeds, colors, radius=len(pixels)//20):
                     pixels[(position-i)%len(pixels)] = (min(255, int(rf+r/radius*(radius-i))), min(255, int(gf+g/radius*(radius-i))), min(255, int(bf+b/radius*(radius-i))))
         pixels.show()
         
-def dot_pan(delay, color, dots, radius=len(pixels)//20):
+def dot_pan(delay, color, dots, radius=15):
     offset = 0
     spacing = (len(pixels)/dots)
     r, g, b = color
@@ -117,7 +118,7 @@ def dot_pan(delay, color, dots, radius=len(pixels)//20):
                 pixels[(position-i)%len(pixels)] = (min(255, int(rf+r/radius*(radius-i))), min(255, int(gf+g/radius*(radius-i))), min(255, int(bf+b/radius*(radius-i))))
         pixels.show()
 
-def dot_pan_rainbow(delay, dots, radius=len(pixels)//20):
+def dot_pan_rainbow(delay, dots, radius=15):
     offset = 0
     spacing = (len(pixels)/dots)
 
@@ -139,14 +140,14 @@ def dot_pan_rainbow(delay, dots, radius=len(pixels)//20):
                 pixels[(position-i)%len(pixels)] = (int(r*brightness),int(g*brightness),int(b*brightness))
         pixels.show()
         
-def rainbow_pan(speed):
+def rainbow_pan(speed, numWaves=2):
     offset = 0
     
     while True:
         time.sleep(0.001)
         offset = (offset+speed/10)%len(pixels)
         for i in range(len(pixels)):
-            r, g, b = colorsys.hls_to_rgb((i+offset)%len(pixels)/len(pixels),0.5,1)
+            r, g, b = colorsys.hls_to_rgb((i+offset)*numWaves%len(pixels)/len(pixels), 0.5,1)
             pixels[i] = (int(r*255), int(g*255), int(b*255))
         pixels.show()
         
@@ -230,9 +231,9 @@ def chaser_rainbow(speed, distance=3):
         pixels.show()
         time.sleep(0.1/speed)
 
-def meteor_rain(color, meteorSize, meteorTrailDecay, speed, meteorRandomDecay=True):  
+def meteor(color, meteorSize, meteorTrailDecay, speed, meteorRandomDecay=True):  
     while True:
-        for i in range(2*len(pixels)):
+        for i in range(len(pixels)+meteorSize):
             # fade brightness all LEDs one step
             for j in range(len(pixels)):
                 if not meteorRandomDecay or random.randint(0, 10)>5:
@@ -251,8 +252,7 @@ def meteor_rain(color, meteorSize, meteorTrailDecay, speed, meteorRandomDecay=Tr
             pixels.show()
             time.sleep(0.02/speed)
 
-def random_fade(timeBetween, color, fadeDelay=None, fadeUp=10):
-    if fadeDelay is None: fadeDelay = timeBetween/2
+def random_fade(timeBetween, color, fadeSpeed=3, fadeUp=10):
     changeTime = time.time()
     cr, cg, cb = color
     
@@ -268,21 +268,21 @@ def random_fade(timeBetween, color, fadeDelay=None, fadeUp=10):
         
         #fade
         for i in range(len(pixels)):
-            if random.randint(0, 10)>5:
+            if random.randint(0, 10) > 5:
                 r, g, b = pixels[i]
-                r = 0 if r<=10 else int(r-(r*fadeDelay/255))
-                g = 0 if g<=10 else int(g-(g*fadeDelay/255))
-                b = 0 if b<=10 else int(b-(b*fadeDelay/255))
+                r = 0 if r<=10 else int(r-(r*fadeSpeed/255))
+                g = 0 if g<=10 else int(g-(g*fadeSpeed/255))
+                b = 0 if b<=10 else int(b-(b*fadeSpeed/255))
                 pixels[i] = (int(r),int(g),int(b))
+        pixels.show()
 
 ################################################################
 # Music Visualisers           
 ################################################################
 
 def sound_original(melspectrum):
-
-    for i in range(SIZE//2):
-        value = (0,0,0)
+    for i in range(len(pixels)//2):
+        value = None
         if melspectrum[i] > 0.6:
             value = (255,0,0)
         elif melspectrum[i] > 0.4:
@@ -290,8 +290,9 @@ def sound_original(melspectrum):
         elif melspectrum[i] > 0.2:
             value = (0,255,0)
 
-        pixels[len(pixels)//2+i] = value)
-        pixels[len(pixels)//2-i] = value
+        if value is not None:
+            pixels[len(pixels)//2+i] = value
+            pixels[len(pixels)//2-i] = value
     pixels.show()
 
 
@@ -299,23 +300,25 @@ def sound_original(melspectrum):
 # Display Select           
 ################################################################
 
-#rainbow(1)
-#pulse(4, (255, 0, 0))
-#pulse_sin(1, (0,255,255))
-#gradient(0.05, (0,0,255))
-#dot_bounce([8, 8, 8], [(255,0,0), (0,255,0), (0,0,255)])
-#dot_pan(0.01, (255,255,255), 4)
-#dot_pan_rainbow(0.01, 4)
-#rainbow_pan(1)
-#dart((255,255,255), speed=100)
-#strobe(10)
-#sparkle(1)
-#wave(1, (255,255,255))
-#wave_rgb(10, -1)
-#chaser(5, (255,0,0), 5)
-#chaser_rainbow(4)
-#meteor_rain((255,200,200), 8, 20, 1)
-#random_fade(2, (255,200,0))
+with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in simulation mode
+    #rainbow(1)
+    #pulse(4, (255, 0, 0))
+    #pulse_sin(1, (0,255,255))
+    #gradient(0.05, (0,0,255))
+    #dot_bounce([8, 8, 8], [(255,0,0), (0,255,0), (0,0,255)])
+    #dot_pan(0.01, (255,255,255), 4)
+    #dot_pan_rainbow(0.01, 4)
+    #rainbow_pan(1, 4)
+    #dart((255,255,255), speed=100)
+    #strobe(10)
+    #sparkle(1)
+    #wave(1, (255,255,255))
+    #wave_rgb(10, -1)
+    #chaser(5, (255,0,0), 5)
+    #chaser_rainbow(4)
+    #meteor((255,200,200), 8, 20, 1)
+    #random_fade(2, (255,200,0))
 
-#run_visualiser(sound_original)
+    pixels.start_fade()
+    pixels.run_visualizer(sound_original)
 
