@@ -76,6 +76,8 @@ class NeoPixels():
     def set_brightness(self, amount=1.0):
         if not self.DEVEL:
             self.pixels.brightness(amount)            
+        else:
+            self.show()
         self.brightness = amount
 
     #starts a thread constantly fading all pixels
@@ -97,7 +99,7 @@ class NeoPixels():
 
     #listens with a socket and gives sound data to the sound_handler
     #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
-    def run_visualizer_socket(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
+    def run_visualizer_socket(self, sound_handler, args=None, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
         if dataLength is None:
             dataLength = self.size
         #create socket server
@@ -118,7 +120,10 @@ class NeoPixels():
                     if data:
                         fdata = bytes_to_float(data)[0]
                         if math.isinf(fdata) and (len(melspectrum) >= dataLength or not skipMalformed):#data is all received
-                            sound_handler(melspectrum)
+                            if args is not None:
+                                sound_handler(melspectrum, args)
+                            else:
+                                sound_handler(melspectrum)
                             melspectrum.clear()
                         elif math.isinf(fdata): #malformed
                             melspectrum.clear()
