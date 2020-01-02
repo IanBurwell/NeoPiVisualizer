@@ -97,16 +97,16 @@ class NeoPixels():
 
     #listens with a socket and gives sound data to the sound_handler
     #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
-    def run_visualizer_socket(self, sound_handler, port=12345, dataType=('e',2), dataLength=None, skipMalformed=True):
+    def run_visualizer_socket(self, sound_handler, dataType=('e',2), dataLength=None, skipMalformed=True):
         if dataLength is None:
             dataLength = self.size
         #create socket server
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', port))
+        s.bind(('', 12345))
         s.listen(5)
 
         bytes_to_float = struct.Struct(dataType[0]).unpack
-        melspectrum = []
+        packet = []
 
         while True: 
             c, addr = s.accept()      
@@ -117,13 +117,13 @@ class NeoPixels():
                     data = c.recv(dataType[1])
                     if data:
                         fdata = bytes_to_float(data)[0]
-                        if math.isinf(fdata) and (len(melspectrum) >= dataLength or not skipMalformed):#data is all received
-                            sound_handler(melspectrum)
-                            melspectrum.clear()
+                        if math.isinf(fdata) and (len(packet) >= dataLength or not skipMalformed):#data is all received
+                            sound_handler(packet)
+                            packet.clear()
                         elif math.isinf(fdata): #malformed
-                            melspectrum.clear()
+                            packet.clear()
                         else:
-                            melspectrum.append(fdata)
+                            packet.append(fdata)
                     else:
                         print("no more data from", client_address)
                         break
@@ -134,7 +134,7 @@ class NeoPixels():
                 return
             finally:
                 print("Lost connection to", addr)
-                melspectrum.clear()
+                packet.clear()
                 c.close()
 
     def _fade(self):
