@@ -5,14 +5,14 @@ import socket
 import struct
 import _thread
 
-'''
+"""
 TODO:
 fade/brightness keeping color ratio
 adjust color setting to be more accurate
 adjust brightness to be more linear
 cast inputs to int
 make pc stream the socket server
-'''
+"""
 
 class NeoPixels():
     #init
@@ -23,10 +23,12 @@ class NeoPixels():
         self.lock = _thread.allocate_lock()
         self.brightness = brightness
         self._fade_thread = None
-        
+        self.fadeDelay = 0.5
+        self.fadeAmount = 20
+
         if fade:
             self.enable_fade()
-            
+
         if self.DEVEL:
             self.pixels = [(0,0,0)] * self.size
             self._display_thread = _thread.start_new_thread(self._display,())
@@ -37,7 +39,7 @@ class NeoPixels():
 
     def __enter__(self):
         return self
-        
+
     def __exit__(self, exception_type, exception_value, traceback):
         if not self.DEVEL:
             self.pixels.deinit()
@@ -76,6 +78,8 @@ class NeoPixels():
     def set_brightness(self, amount=1.0):
         if not self.DEVEL:
             self.pixels.brightness(amount)            
+        else:
+            self.show()
         self.brightness = amount
 
     #starts a thread constantly fading all pixels
@@ -97,7 +101,7 @@ class NeoPixels():
 
     #listens with a socket and gives sound data to the sound_handler
     #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
-    def run_visualizer_socket(self, sound_handler, dataType=('e',2), dataLength=None, skipMalformed=True):
+    def run_visualizer_socket(self, sound_handler, args=None, dataType=('e', 2), dataLength=None, skipMalformed=True):
         if dataLength is None:
             dataLength = self.size
         #create socket server
@@ -118,14 +122,17 @@ class NeoPixels():
                     if data:
                         fdata = bytes_to_float(data)[0]
                         if math.isinf(fdata) and (len(packet) >= dataLength or not skipMalformed):#data is all received
-                            sound_handler(packet)
+                            if args is not None:
+                                sound_handler(packet, args)
+                            else:
+                                sound_handler(packet)
                             packet.clear()
                         elif math.isinf(fdata): #malformed
                             packet.clear()
                         else:
                             packet.append(fdata)
                     else:
-                        print("no more data from", client_address)
+                        print("no more data from", addr)
                         break
             except KeyboardInterrupt:
                 print("Closing")
@@ -157,7 +164,7 @@ class NeoPixels():
         screen = pygame.display.set_mode((900, 50), pygame.RESIZABLE)
         pygame.display.set_caption("Simulated Neopixels")
         clock = pygame.time.Clock()
-        
+
         while self._display_thread is not None:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -165,7 +172,7 @@ class NeoPixels():
                     _thread.interrupt_main()
                     return
                 if event.type == pygame.VIDEORESIZE:
-                    surface = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                    screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
 
             if self.updatePygame:
                 screen.fill((0, 0, 0))
@@ -185,7 +192,7 @@ if __name__ == "__main__":
 
     def rainbow_pan(speed, numWaves=4):
         offset = 0
-        
+
         while True:
             time.sleep(0.001)
             offset = (offset+speed/10)%len(pixels)
@@ -194,4 +201,4 @@ if __name__ == "__main__":
                 pixels[i] = (int(r*255), int(g*255), int(b*255))
             pixels.show()
     rainbow_pan(1)
-        
+   

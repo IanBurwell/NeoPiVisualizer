@@ -302,8 +302,14 @@ def sound_rgb(melspectrum):
         pixels[len(pixels)//2+i] = (int(r*255), int(g*255), int(b*255))
         pixels[len(pixels)//2-i] = (int(r*255), int(g*255), int(b*255))
     pixels.show()
+    print (melspectrum[0])
 
+def sound_pulse(melspectrum, color):
+    for i in range(len(pixels)):
+        pixels[i] = color
 
+    pixels.set_brightness(min(1, sum(melspectrum[:15])/15/4))
+    
 
 ################################################################
 # Display Select           
@@ -317,7 +323,7 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #dot_bounce([8, 8, 8], [(255,0,0), (0,255,0), (0,0,255)])
     #dot_pan(0.01, (255,255,255), 4)
     #dot_pan_rainbow(0.01, 4)
-    #rainbow_pan(1, 4)
+    rainbow_pan(1, 4)
     #dart((255,255,255), speed=100)
     #strobe(10)
     #sparkle(1)
@@ -331,3 +337,4 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #pixels.enable_fade()
     #pixels.run_visualizer_socket(sound_original)
     #pixels.run_visualizer_socket(sound_rgb)
+    #pixels.run_visualizer_socket(sound_pulse, ((128,0,128)))
