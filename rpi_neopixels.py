@@ -1,6 +1,6 @@
-import time
-import colorsys
-import random
+import time 
+import colorsys 
+import random 
 import math
 
 import neopixel_dev
@@ -247,7 +247,7 @@ def meteor(color, meteorSize, meteorTrailDecay, speed, meteorRandomDecay=True):
             # draw meteor
             for j in range(meteorSize):
                 if i-j < len(pixels) and i-j >= 0:
-                    pixels[i-j] = color;
+                    pixels[i-j] = color
 
             pixels.show()
             time.sleep(0.02/speed)
@@ -264,7 +264,7 @@ def random_fade(timeBetween, color, fadeSpeed=3, fadeUp=10):
             for j in range(1, fadeUp):
                 time.sleep(0.01)
                 for i in range(len(pixels)):
-                   pixels[i] = (cr*j/fadeUp, cg*j/fadeUp, cb*j/fadeUp)
+                    pixels[i] = (cr*j/fadeUp, cg*j/fadeUp, cb*j/fadeUp)
         
         #fade
         for i in range(len(pixels)):
@@ -275,6 +275,139 @@ def random_fade(timeBetween, color, fadeSpeed=3, fadeUp=10):
                 b = 0 if b<=10 else int(b-(b*fadeSpeed/255))
                 pixels[i] = (int(r),int(g),int(b))
         pixels.show()
+
+def insertion_sort():
+    def display_array(arr):
+        for i, v in enumerate(arr):
+            r, g, b = colorsys.hls_to_rgb(v, 0.5, 1)
+            pixels[i] = (r*255, g*255, b*255)
+        pixels.show()
+    def shuffle(arr, shuffles=20):
+        for i in range(shuffles):
+            random.shuffle(arr)
+            display_array(arr)
+            time.sleep(0.1)
+        
+            
+    arr = [x/len(pixels) for x in range(len(pixels))]
+    while True:
+        shuffle(arr)
+        for i, e in enumerate(arr):
+            for j, f in enumerate(arr[:i+1]):
+                if f > e: break
+            arr.pop(i)
+            arr.insert(j, e)
+            display_array(arr)
+            time.sleep(10/len(pixels))
+        time.sleep(5)
+
+
+
+def selection_sort():
+    def display_array(arr):
+        for i, v in enumerate(arr):
+            r, g, b = colorsys.hls_to_rgb(v, 0.5, 1)
+            pixels[i] = (r*255, g*255, b*255)
+        pixels.show()
+    def shuffle(arr, shuffles=20):
+        for i in range(shuffles):
+            random.shuffle(arr)
+            display_array(arr)
+            time.sleep(0.1)
+        
+            
+    arr = [x/len(pixels) for x in range(len(pixels))]
+    while True:
+        shuffle(arr)
+        for i, _ in enumerate(arr):
+            small = min(arr[i:])
+            mini = arr.index(small)
+            arr.pop(mini)
+            arr.insert(i, small)
+            display_array(arr)
+            time.sleep(10/len(pixels))
+        time.sleep(5)
+
+def merge_sort():
+    def display_array(arr):
+        for i, v in enumerate(arr):
+            r, g, b = colorsys.hls_to_rgb(v, 0.5, 1)
+            pixels[i] = (r*255, g*255, b*255)
+        pixels.show()
+    def shuffle(arr, shuffles=20):
+        for i in range(shuffles):
+            random.shuffle(arr)
+            display_array(arr)
+            time.sleep(0.1)
+            
+    def mergeSorter(arr, first, last):
+        if first >= last: return
+
+        mid = (first + last)//2
+        mergeSorter(arr, first, mid)
+        mergeSorter(arr, mid+1, last)
+
+        left, right = first, mid+1
+        if arr[mid] <= arr[right]: return
+
+        while left <= mid and right <= last:
+            if arr[left] <= arr[right]:
+                left += 1
+            else:
+                tmp = arr[right]
+                arr[left+1:right+1] = arr[left:right]
+                arr[left] = tmp
+                left += 1
+                mid += 1
+                right += 1
+                time.sleep(0.002)
+                display_array(arr)
+    
+    arr = [x/len(pixels) for x in range(len(pixels))]
+    while True:
+        shuffle(arr)
+        mergeSorter(arr, 0, len(pixels)-1)
+        time.sleep(5)
+
+def quick_sort():
+    def display_array(arr):
+        for i, v in enumerate(arr):
+            r, g, b = colorsys.hls_to_rgb(v, 0.5, 1)
+            pixels[i] = (r*255, g*255, b*255)
+        pixels.show()
+    def shuffle(arr, shuffles=20):
+        for i in range(shuffles):
+            random.shuffle(arr)
+            display_array(arr)
+            time.sleep(0.1)
+            
+    def quick_sorter(arr, first, last):
+        if first >= last: return
+
+        randpivot = random.randrange(first, last)
+        arr[first], arr[randpivot] = arr[randpivot], arr[first]
+
+        pivot = first
+        i = first + 1
+        for j in range(first+1, last+1):
+            if arr[j] <= arr[pivot]:
+                arr[i], arr[j] = arr[j], arr[i]
+                i += 1
+                display_array(arr)
+                time.sleep(0.002)
+
+        arr[pivot], arr[i-1] = arr[i-1], arr[pivot]
+        pivot = i-1
+
+        quick_sorter(arr, first, pivot-1)
+        quick_sorter(arr, pivot+1, last)
+    
+    arr = [x/len(pixels) for x in range(len(pixels))]
+    while True:
+        shuffle(arr)
+        quick_sorter(arr, 0, len(pixels)-1)
+        time.sleep(5)
+
 
 ################################################################
 # Music Visualisers           
@@ -323,7 +456,7 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #dot_bounce([8, 8, 8], [(255,0,0), (0,255,0), (0,0,255)])
     #dot_pan(0.01, (255,255,255), 4)
     #dot_pan_rainbow(0.01, 4)
-    rainbow_pan(1, 4)
+    #rainbow_pan(1, 4)
     #dart((255,255,255), speed=100)
     #strobe(10)
     #sparkle(1)
@@ -333,8 +466,13 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #chaser_rainbow(4)
     #meteor((255,200,200), 8, 20, 1)
     #random_fade(2, (255,200,0))
+    #insertion_sort()
+    #selection_sort()
+    merge_sort()
+    #quick_sort()
 
     #pixels.enable_fade()
     #pixels.run_visualizer_socket(sound_original)
     #pixels.run_visualizer_socket(sound_rgb)
     #pixels.run_visualizer_socket(sound_pulse, ((128,0,128)))
+
