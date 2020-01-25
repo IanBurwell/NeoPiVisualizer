@@ -54,7 +54,7 @@ class NeoPixels():
 
     def __setitem__(self, index, val):
         with self.lock:
-            self.pixels[index] = val
+            self.pixels[index] = (int(val[0]),int(val[1]),int(val[2]))
 
     def __len__(self):
         return len(self.pixels)
@@ -62,7 +62,7 @@ class NeoPixels():
     #updates the leds with the data in pixels
     def show(self):
         if not self.DEVEL:
-            pixels.show()
+            self.pixels.show()
         else:
             self.updatePygame = True
 
@@ -101,9 +101,9 @@ class NeoPixels():
 
     #listens with a socket and gives sound data to the sound_handler
     #dataType is the type of data being recieved. See the struct module for other datatypes (default is a 2 byte float)
-    def run_visualizer_socket(self, sound_handler, args=None, dataType=('e', 2), dataLength=None, skipMalformed=True):
+    def run_visualizer_socket(self, sound_handler, args=None, dataType=('e', 2), dataLength=None, keepMalformed=False):
         if dataLength is None:
-            dataLength = self.size
+            dataLength = self.size/2
         #create socket server
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', 12345))
@@ -121,7 +121,7 @@ class NeoPixels():
                     data = c.recv(dataType[1])
                     if data:
                         fdata = bytes_to_float(data)[0]
-                        if math.isinf(fdata) and (len(packet) >= dataLength or not skipMalformed):#data is all received
+                        if math.isinf(fdata) and (len(packet) >= dataLength or keepMalformed):#data is all received
                             if args is not None:
                                 sound_handler(packet, args)
                             else:

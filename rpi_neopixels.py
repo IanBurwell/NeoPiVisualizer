@@ -430,12 +430,11 @@ def sound_original(melspectrum):
 
 def sound_rgb(melspectrum):
     for i in range(len(pixels)//2):
-        r, g, b = colorsys.hls_to_rgb(max(0, 1-melspectrum[i]/2),min(0.5, melspectrum[i]),1)
-
-        pixels[len(pixels)//2+i] = (int(r*255), int(g*255), int(b*255))
-        pixels[len(pixels)//2-i] = (int(r*255), int(g*255), int(b*255))
+        r, g, b = colorsys.hls_to_rgb(max(0, 1-melspectrum[i]),0.5,1)
+        bright = min(1, max(0, (melspectrum[i]-0.1)/4))
+        pixels[len(pixels)//2+i] = (int(r*255*bright), int(g*255*bright), int(b*255*bright))
+        pixels[len(pixels)//2-i] = (int(r*255*bright), int(g*255*bright), int(b*255*bright))
     pixels.show()
-    print (melspectrum[0])
 
 def sound_pulse(melspectrum, color):
     for i in range(len(pixels)):
@@ -468,11 +467,11 @@ with neopixel_dev.NeoPixels(DEVELOPER_MODE) as pixels: #Start NeoPixels with in 
     #random_fade(2, (255,200,0))
     #insertion_sort()
     #selection_sort()
-    merge_sort()
+    #merge_sort()
     #quick_sort()
 
     #pixels.enable_fade()
     #pixels.run_visualizer_socket(sound_original)
-    #pixels.run_visualizer_socket(sound_rgb)
+    pixels.run_visualizer_socket(sound_rgb)
     #pixels.run_visualizer_socket(sound_pulse, ((128,0,128)))
 

@@ -13,7 +13,7 @@ import struct
 import time
 
 DATA_SEND_RATE = 30 #hz
-IP_ADDRESS = '192.168.1.19'
+IP_ADDRESS = '192.168.137.200'
 #IP_ADDRESS = 'localhost'
 SCREEN_WIDTH = 150
 
@@ -25,8 +25,8 @@ N_FFT = 4096
 ENERGY_THRESHOLD = 0.2
 
 # Choose the frequency range
-F_LO = librosa.note_to_hz('C2')
-F_HI = librosa.note_to_hz('C9')
+F_LO = librosa.note_to_hz('C1')
+F_HI = librosa.note_to_hz('C6')
 M = librosa.filters.mel(RATE, N_FFT, SCREEN_WIDTH, fmin=F_LO, fmax=F_HI)
 
 #init
